@@ -21,8 +21,32 @@ func main() {
 
 	c := greetpb.NewGreetServiceClient(conn)
 
-	doServerStream(c)
+	doClientStream(c)
+	// doServerStream(c)
 	// doUnary(c)
+}
+
+func doClientStream(c greetpb.GreetServiceClient) {
+	stream, err := c.LongGreet(context.Background())
+	if err != nil {
+		log.Fatalf("failed to init stream: %v\n", err)
+		return
+	}
+	for i := 0; i < 10; i++ {
+		req := greetpb.LongGreetRequest{
+			MagicNumber: int32(i),
+		}
+
+		err = stream.Send(&req)
+		if err != nil {
+			log.Fatalf("failed to send stream to server: %v\n", err)
+		}
+	}
+	res, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Failed to listen to the server: %v\n", err)
+	}
+	fmt.Printf("Response from ther server; %v", res.Result)
 }
 
 func doServerStream(c greetpb.GreetServiceClient) {

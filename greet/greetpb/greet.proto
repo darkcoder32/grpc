@@ -24,9 +24,19 @@ message GreetingManyTimesResponse {
     string result = 1;
 }
 
+message LongGreetRequest {
+    int32 magic_number = 1;
+}
+
+message LongGreetResponse {
+    int32 result = 1;
+}
+
 service GreetService {
     rpc Greet(GreetRequest) returns (GreetingResponse) {};
 
     rpc GreetManyTimes(GreetManyTimesRequest) returns (stream GreetingManyTimesResponse) {};
+
+    rpc LongGreet(stream LongGreetRequest) returns (LongGreetResponse) {}; 
 }
 
