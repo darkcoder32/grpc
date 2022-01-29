@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"grpc/greet/greetpb"
+	"io"
 	"log"
 	"net"
 	"strconv"
@@ -36,6 +37,23 @@ func (*server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greetpb
 		time.Sleep(time.Second)
 	}
 	return nil
+}
+
+func (*server) LongGreet(stream greetpb.GreetService_LongGreetServer) error {
+	fmt.Printf("LongGreet function is invoked; %v\n", stream)
+	var sum int32
+	for {
+		msg, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&greetpb.LongGreetResponse{
+				Result: sum,
+			})
+		}
+		if err != nil {
+			log.Fatalf("Stream Reading error: %v\n", err)
+		}
+		sum += msg.GetMagicNumber()
+	}
 }
 
 func main() {
