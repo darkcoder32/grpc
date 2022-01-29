@@ -47,6 +47,6 @@ service GreetService {
 
     rpc LongGreet(stream LongGreetRequest) returns (LongGreetResponse) {}; 
 
-    rpc BiGreet(stream BiGreetRequest) returns (BiGreetResponse) {};
+    rpc BiGreet(stream BiGreetRequest) returns (stream BiGreetResponse) {};
 }
 

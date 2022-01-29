@@ -56,6 +56,26 @@ func (*server) LongGreet(stream greetpb.GreetService_LongGreetServer) error {
 	}
 }
 
+func (*server) BiGreet(stream greetpb.GreetService_BiGreetServer) error {
+	fmt.Printf("BiGreet function is invoked: %v\n", stream)
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Stream Reading error: %v\n", err)
+		}
+		fmt.Printf("Small number from client received: %v\n", req.GetSmallNumber())
+		err = stream.Send(&greetpb.BiGreetResponse{
+			LargeNumber: req.GetSmallNumber() + 1000,
+		})
+		if err != nil {
+			log.Fatalf("Error while sending data to client: %v\n", err)
+		}
+	}
+}
+
 func main() {
 	fmt.Println("Hello world")
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
