@@ -20,6 +20,10 @@ func main() {
 
 	c := greetpb.NewGreetServiceClient(conn)
 
+	doUnary(c)
+}
+
+func doUnary(c greetpb.GreetServiceClient) {
 	req := greetpb.GreetRequest{
 		Greeting: &greetpb.Greeting{
 			FirstName: "Sumit",
