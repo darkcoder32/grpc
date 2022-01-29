@@ -6,6 +6,7 @@ import (
 	"grpc/greet/greetpb"
 	"io"
 	"log"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -21,9 +22,52 @@ func main() {
 
 	c := greetpb.NewGreetServiceClient(conn)
 
-	doClientStream(c)
+	doBiStream(c)
+	// doClientStream(c)
 	// doServerStream(c)
 	// doUnary(c)
+}
+
+func doBiStream(c greetpb.GreetServiceClient) {
+	stream, err := c.BiGreet(context.Background())
+	if err != nil {
+		log.Fatalf("failed to init stream: %v\n", err)
+		return
+	}
+	go BiSend(stream)
+	go BiRecv(stream)
+	time.Sleep(time.Minute)
+}
+
+func BiSend(stream greetpb.GreetService_BiGreetClient) error {
+	fmt.Printf("BiSend function is invoked; %v\n", stream)
+	for i := 0; i < 10; i++ {
+		res := greetpb.BiGreetRequest{
+			SmallNumber: int32(i + 1),
+		}
+		err := stream.Send(&res)
+		if err != nil {
+			log.Fatalf("Stream Send failed: %v\n", err)
+			return err
+		}
+		time.Sleep(time.Second)
+	}
+	stream.CloseSend()
+	return nil
+}
+
+func BiRecv(stream greetpb.GreetService_BiGreetClient) error {
+	fmt.Printf("BiRecv function is invoked; %v\n", stream)
+	for {
+		msg, err := stream.Recv()
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			log.Fatalf("Stream Reading error: %v\n", err)
+		}
+		fmt.Printf("Large number from the server: %v\n", msg.GetLargeNumber())
+	}
 }
 
 func doClientStream(c greetpb.GreetServiceClient) {
