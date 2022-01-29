@@ -34,12 +34,20 @@ func doBiStream(c greetpb.GreetServiceClient) {
 		log.Fatalf("failed to init stream: %v\n", err)
 		return
 	}
-	go BiSend(stream)
-	go BiRecv(stream)
-	time.Sleep(time.Minute)
+
+	ch1 := make(chan bool)
+	ch2 := make(chan bool)
+
+	go BiSend(stream, ch1)
+	go BiRecv(stream, ch2)
+	<-ch1
+	<-ch2
 }
 
-func BiSend(stream greetpb.GreetService_BiGreetClient) error {
+func BiSend(stream greetpb.GreetService_BiGreetClient, ch chan bool) error {
+	defer func() {
+		ch <- true
+	}()
 	fmt.Printf("BiSend function is invoked; %v\n", stream)
 	for i := 0; i < 10; i++ {
 		res := greetpb.BiGreetRequest{
@@ -56,7 +64,10 @@ func BiSend(stream greetpb.GreetService_BiGreetClient) error {
 	return nil
 }
 
-func BiRecv(stream greetpb.GreetService_BiGreetClient) error {
+func BiRecv(stream greetpb.GreetService_BiGreetClient, ch chan bool) error {
+	defer func() {
+		ch <- true
+	}()
 	fmt.Printf("BiRecv function is invoked; %v\n", stream)
 	for {
 		msg, err := stream.Recv()
