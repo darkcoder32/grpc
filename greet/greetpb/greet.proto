@@ -32,11 +32,21 @@ message LongGreetResponse {
     int32 result = 1;
 }
 
+message BiGreetRequest {
+    int32 small_number = 1;
+}
+
+message BiGreetResponse {
+    int32 large_number = 1;
+}
+
 service GreetService {
     rpc Greet(GreetRequest) returns (GreetingResponse) {};
 
     rpc GreetManyTimes(GreetManyTimesRequest) returns (stream GreetingManyTimesResponse) {};
 
     rpc LongGreet(stream LongGreetRequest) returns (LongGreetResponse) {}; 
+
+    rpc BiGreet(stream BiGreetRequest) returns (BiGreetResponse) {};
 }
 
