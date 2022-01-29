@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"strconv"
+	"time"
 
 	"google.golang.org/grpc"
 )
@@ -32,6 +33,7 @@ func (*server) GreetManyTimes(req *greetpb.GreetManyTimesRequest, stream greetpb
 			log.Fatalf("Stream Send failed: %v\n", err)
 			return err
 		}
+		time.Sleep(time.Second)
 	}
 	return nil
 }
