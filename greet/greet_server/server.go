@@ -17,7 +17,7 @@ func main() {
 	}
 
 	s := grpc.NewServer()
-	greetpb.RegisterGreetServiceServer(s, greetpb.UnimplementedGreetServiceServer{})
+	greetpb.RegisterGreetServiceServer(s, &greetpb.UnimplementedGreetServiceServer{})
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to server: %v", err)
