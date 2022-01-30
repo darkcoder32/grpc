@@ -23,12 +23,40 @@ func main() {
 	defer conn.Close()
 
 	c := greetpb.NewGreetServiceClient(conn)
-
-	doSquareRoot(c)
+	// successful run
+	doUnaryDeadline(c, 5*time.Second)
+	// deadline exceeeded
+	doUnaryDeadline(c, 1*time.Second)
+	// doSquareRoot(c)
 	// doBiStream(c)
 	// doClientStream(c)
 	// doServerStream(c)
 	// doUnary(c)
+}
+
+func doUnaryDeadline(c greetpb.GreetServiceClient, timeout time.Duration) {
+	req := greetpb.GreetDeadlineRequest{
+		Greeting: &greetpb.Greeting{
+			FirstName: "Sumit",
+			LastName:  "Kumar",
+		},
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	res, err := c.GreetDeadline(ctx, &req)
+	if err != nil {
+		statusErr, ok := status.FromError(err)
+		if ok {
+			if statusErr.Code() == codes.DeadlineExceeded {
+				fmt.Printf("Deadline exceeded by server\n")
+			} else {
+				fmt.Printf("unexpected error: %v\n", statusErr)
+			}
+		} else {
+			log.Fatalf("Client Error in calling Greet: %v\n", err)
+		}
+	}
+	log.Printf("Response from server: %v\n", res.GetResult())
 }
 
 func doSquareRoot(c greetpb.GreetServiceClient) {

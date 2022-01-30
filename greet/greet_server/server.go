@@ -88,6 +88,17 @@ func (*server) SquareRoot(ctx context.Context, req *greetpb.SquareRootRequest) (
 	return &greetpb.SquareRootResponse{Result: math.Sqrt(float64(number))}, nil
 }
 
+func (*server) GreetDeadline(ctx context.Context, req *greetpb.GreetDeadlineRequest) (*greetpb.GreetDeadlineResponse, error) {
+	for i := 0; i < 3; i++ {
+		if ctx.Err() == context.Canceled {
+			fmt.Printf("client canceled the request\n")
+			return nil, status.Errorf(codes.DeadlineExceeded, "Deadline exceeded")
+		}
+		time.Sleep(time.Second)
+	}
+	return &greetpb.GreetDeadlineResponse{Result: "Hello " + req.GetGreeting().GetFirstName()}, nil
+}
+
 func main() {
 	fmt.Println("Hello world")
 	lis, err := net.Listen("tcp", "0.0.0.0:50051")
