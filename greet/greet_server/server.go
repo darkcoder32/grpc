@@ -6,11 +6,14 @@ import (
 	"grpc/greet/greetpb"
 	"io"
 	"log"
+	"math"
 	"net"
 	"strconv"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type server struct{}
@@ -74,6 +77,15 @@ func (*server) BiGreet(stream greetpb.GreetService_BiGreetServer) error {
 			log.Fatalf("Error while sending data to client: %v\n", err)
 		}
 	}
+}
+
+func (*server) SquareRoot(ctx context.Context, req *greetpb.SquareRootRequest) (*greetpb.SquareRootResponse, error) {
+	fmt.Printf("SquareRoot function is invoked: %v\n", req)
+	number := req.GetNumber()
+	if number < 0 {
+		return nil, status.Errorf(codes.InvalidArgument, fmt.Sprintf("Negative number received from the client: %v\n", number))
+	}
+	return &greetpb.SquareRootResponse{Result: math.Sqrt(float64(number))}, nil
 }
 
 func main() {
