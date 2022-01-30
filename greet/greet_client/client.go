@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -22,10 +24,29 @@ func main() {
 
 	c := greetpb.NewGreetServiceClient(conn)
 
-	doBiStream(c)
+	doSquareRoot(c)
+	// doBiStream(c)
 	// doClientStream(c)
 	// doServerStream(c)
 	// doUnary(c)
+}
+
+func doSquareRoot(c greetpb.GreetServiceClient) {
+	req := &greetpb.SquareRootRequest{Number: -1}
+	res, err := c.SquareRoot(context.Background(), req)
+	if err != nil {
+		fromErr, ok := status.FromError(err)
+		if ok {
+			fmt.Println(fromErr.Message())
+			fmt.Println(fromErr.Code())
+			if fromErr.Code() == codes.InvalidArgument {
+				fmt.Printf("client probably sent a negative number\n")
+			}
+		} else {
+			fmt.Printf("SquareRoot calling failed for server: %v\n", err)
+		}
+	}
+	fmt.Printf("Response received from client: %v\n", res.GetResult())
 }
 
 func doBiStream(c greetpb.GreetServiceClient) {
