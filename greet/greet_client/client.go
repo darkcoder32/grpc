@@ -10,12 +10,18 @@ import (
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
 
 func main() {
 	fmt.Println("Hello world")
-	conn, err := grpc.Dial("0.0.0.0:50051", grpc.WithInsecure())
+	certFile := "ssl/ca.crt"
+	creds, sslErr := credentials.NewClientTLSFromFile(certFile, "")
+	if sslErr != nil {
+		log.Fatalf("Failed to load certificate: %v\n", sslErr)
+	}
+	conn, err := grpc.Dial("0.0.0.0:50051", grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("Could not connect: %v", err)
 	}
