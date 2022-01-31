@@ -5,13 +5,24 @@ import (
 	"context"
 	"fmt"
 	"grpc/chat-service/chatpb"
-	"io"
 	"log"
 	"os"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc"
 )
+
+var count int32
+
+var mu sync.Mutex
+
+func getId() int32 {
+	mu.Lock()
+	count++
+	mu.Unlock()
+	return count
+}
 
 func main() {
 	fmt.Println("Client Hello")
@@ -25,33 +36,32 @@ func main() {
 	ch1 := make(chan bool)
 	ch2 := make(chan bool)
 
-	go func() {
+	name := os.Args[1]
+	user := &chatpb.User{
+		Id:   getId(),
+		Name: name,
+	}
+	stream, err := c.CreateStream(context.Background(), &chatpb.Connect{
+		User:   user,
+		Active: true,
+	})
+	if err != nil {
+		log.Fatalf("Failed to create stream: %v\n", stream)
+	}
+	go func(str chatpb.ChatService_CreateStreamClient) {
 		defer func() {
 			ch1 <- true
 		}()
-		stream, err := c.CreateStream(context.Background(), &chatpb.Connect{
-			User: &chatpb.User{
-				Id:   1,
-				Name: "Sumit Kumar",
-			},
-			Active: true,
-		})
-		if err != nil {
-			log.Fatalf("Failed to call create stream: %v\n", err)
-			return
-		}
 		for {
-			msg, err := stream.Recv()
-			if err == io.EOF {
+			msg, streamErr := str.Recv()
+			if streamErr != nil {
+				fmt.Printf("Failed to receive message: %v\n", err)
 				break
 			}
-			if err != nil {
-				log.Fatalf("Failed to receive message: %v\n", err)
-				break
-			}
-			fmt.Printf("Message received from id %d: %v", msg.GetUser().GetId(), msg.GetText())
+			// msg
+			fmt.Printf("Message received from %v: %v\n", msg.GetUser().GetName(), msg.GetText())
 		}
-	}()
+	}(stream)
 	go func() {
 		defer func() {
 			ch2 <- true
@@ -59,16 +69,13 @@ func main() {
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
 			msg := &chatpb.Message{
-				User: &chatpb.User{
-					Id:   1,
-					Name: "Sumit Kumar",
-				},
+				User:      user,
 				Text:      scanner.Text(),
 				Timestamp: time.Now().String(),
 			}
 			_, err := c.BroadCast(context.Background(), msg)
 			if err != nil {
-				log.Fatalf("Error in broadcastin: %v\n", err)
+				fmt.Printf("Error in broadcastin: %v\n", err)
 				break
 			}
 		}

@@ -29,7 +29,7 @@ func (s *Server) CreateStream(con *chatpb.Connect, stream chatpb.ChatService_Cre
 		err:    make(chan error),
 	}
 	s.Connection = append(s.Connection, conn)
-	return nil
+	return <-conn.err
 }
 
 func (s *Server) BroadCast(ctx context.Context, msg *chatpb.Message) (*chatpb.Close, error) {
@@ -40,7 +40,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *chatpb.Message) (*chatpb.Cl
 			if err != nil {
 				conn.active = false
 				conn.err <- err
-				log.Fatalf("Error sending messgae to user: user id %d: %v\n", conn.id, err)
+				fmt.Printf("Error sending messgae to user: user id %d: %v\n", conn.id, err)
 			}
 		}
 	}
@@ -53,9 +53,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen to the port: %v\n", err)
 	}
-	grpc := grpc.NewServer()
-	chatpb.RegisterChatServiceServer(grpc, &Server{})
-	if err := grpc.Serve(lis); err != nil {
+	serv := grpc.NewServer()
+	chatpb.RegisterChatServiceServer(serv, &Server{})
+	if err := serv.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve the server: %v\n", err)
 	}
 }
